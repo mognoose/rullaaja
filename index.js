@@ -71,16 +71,34 @@ client.on('ready', async () => {
 client.login(process.env.TOKEN);
 
 http.createServer(async (req, res) => {
-    const uri = url.parse(req.url).pathname.split("/");
-    const baseUrl = uri[1]
-    const diceRequest = uri[2]
-    let dice = diceRequest || 20;
-    if(baseUrl == 'api'){
-        res.writeHead(200, {'Content-Type': 'application/json'});
-        const rolled = roll(dice);
-        const channel = await client.channels.fetch('479199736776228865');
-        channel.send(parseMessage('Unknown API user', rolled));
-        res.end(JSON.stringify(rolled));
+    const headers = {
+      'Access-Control-Allow-Origin': '*',
+      "Access-Control-Allow-Headers": '*',
+      'Access-Control-Allow-Methods': 'OPTIONS, POST, GET',
+      'Access-Control-Max-Age': 2592000,
+    };
+
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, headers);
+      res.end();
+      return;
     }
 
-  }).listen(3000);
+    const baseUrl = url.parse(req.url).pathname.split("/")[1];
+
+    if(req.method === 'POST' && baseUrl == 'api') {
+      let body = '';
+      req.on('data', chunk => {
+        body += chunk.toString();
+      });
+      req.on('end', async () => {
+        const user = JSON?.parse(body).name || 'Tuntematon'
+        const dice = JSON?.parse(body).dice || 20
+        res.writeHead(200, headers);
+        const rolled = roll(dice);
+        const channel = await client.channels.fetch(process.env.CHANNELID);
+        channel.send(parseMessage(user, rolled));
+        res.end(JSON.stringify(rolled));
+    });
+  }
+}).listen(3000);
