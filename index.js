@@ -92,13 +92,26 @@ http.createServer(async (req, res) => {
         body += chunk.toString();
       });
       req.on('end', async () => {
-        const user = JSON?.parse(body).name || 'Tuntematon'
-        const dice = JSON?.parse(body).dice || 20
+        const user = JSON?.parse(body).name
+        const dice = JSON?.parse(body).dice
+        const channelid = JSON?.parse(body).channelid;
+        if(!user || !dice || !channelid) {
+          res.writeHead(400, 'bad request')
+          res.end();
+          return;
+        }
         res.writeHead(200, headers);
         const rolled = roll(dice);
-        const channel = await client.channels.fetch(process.env.CHANNELID);
+        let channel
+        try {
+          channel = await client.channels.fetch(channelid);
+        } catch (error) {
+          res.writeHead(400, 'bad request: channel not found')
+          res.end();
+          return;
+        }
         channel.send(parseMessage(user, rolled));
-        res.end(JSON.stringify(rolled));
+        res.end(JSON.stringify({channel: channelid, ...rolled}));
     });
   }
 }).listen(3000);
