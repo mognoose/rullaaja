@@ -95,6 +95,7 @@ http.createServer(async (req, res) => {
         const user = JSON?.parse(body).name
         const dice = JSON?.parse(body).dice
         const channelid = JSON?.parse(body).channelid;
+        const hidden = JSON?.parse(body).hidden;
         if(!user || !dice || !channelid) {
           res.writeHead(400, 'bad request')
           res.end();
@@ -110,7 +111,9 @@ http.createServer(async (req, res) => {
           res.end();
           return;
         }
-        channel.send(parseMessage(user, rolled));
+        if(!hidden) {
+          channel.send(parseMessage(user, rolled));
+        }
         res.end(JSON.stringify({channel: channelid, ...rolled}));
     });
   }
